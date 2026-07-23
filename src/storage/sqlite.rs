@@ -37,6 +37,12 @@ impl SqliteStore {
         Self::open_path(database_path()).await
     }
 
+    /// Close all database connections. Primarily used by lifecycle code and
+    /// failure-path tests to prove callers do not swallow backend errors.
+    pub async fn close(&self) {
+        self.pool.close().await;
+    }
+
     pub async fn open_path(path: impl AsRef<Path>) -> Result<Self, StorageError> {
         let path = path.as_ref().to_path_buf();
         if let Some(parent) = path.parent() {
@@ -391,6 +397,18 @@ impl SqliteStore {
             presets.push(map_preset_row(&row)?);
         }
         Ok(presets)
+    }
+
+    pub async fn delete_fusion_preset(&self, name: &str) -> Result<(), StorageError> {
+        let result = sqlx::query("DELETE FROM fusion_presets WHERE name = ?")
+            .bind(name)
+            .execute(&self.pool)
+            .await
+            .map_err(StorageError::from_sqlx)?;
+        if result.rows_affected() == 0 {
+            return Err(StorageError::NotFound(name.to_owned()));
+        }
+        Ok(())
     }
 
     pub async fn save_gateway_config(&self, config: &GatewayConfig) -> Result<(), StorageError> {

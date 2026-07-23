@@ -77,6 +77,17 @@ impl FusionPreset {
         for advisor_id in &self.advisor_worker_ids {
             require_known_worker(workers, advisor_id)?;
         }
+        if self
+            .advisor_worker_ids
+            .iter()
+            .any(|id| id == &self.judge_worker_id)
+        {
+            return Err(ConfigError::JudgeIsAdvisor(self.judge_worker_id.clone()));
+        }
+        let unique: std::collections::BTreeSet<_> = self.advisor_worker_ids.iter().collect();
+        if unique.len() != self.advisor_worker_ids.len() {
+            return Err(ConfigError::DuplicateAdvisor);
+        }
         require_known_worker(workers, &self.judge_worker_id)?;
         Ok(())
     }

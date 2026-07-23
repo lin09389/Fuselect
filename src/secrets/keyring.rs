@@ -7,6 +7,7 @@ use super::{SecretError, SecretRef, SecretString};
 
 /// OS-independent credential store used by business logic.
 pub trait SecretStore: Send + Sync {
+    fn exists(&self, reference: &SecretRef) -> Result<bool, SecretError>;
     fn set(&self, reference: &SecretRef, secret: SecretString) -> Result<(), SecretError>;
     fn get(&self, reference: &SecretRef) -> Result<SecretString, SecretError>;
     fn delete(&self, reference: &SecretRef) -> Result<(), SecretError>;
@@ -25,6 +26,10 @@ impl FakeSecretStore {
 }
 
 impl SecretStore for FakeSecretStore {
+    fn exists(&self, reference: &SecretRef) -> Result<bool, SecretError> {
+        let entries = self.entries.lock().map_err(|_| SecretError::Backend)?;
+        Ok(entries.contains_key(reference.as_str()))
+    }
     fn set(&self, reference: &SecretRef, secret: SecretString) -> Result<(), SecretError> {
         let mut entries = self.entries.lock().map_err(|_| SecretError::Backend)?;
         entries.insert(reference.as_str().to_owned(), secret.expose().to_owned());
@@ -55,6 +60,13 @@ impl SecretStore for FakeSecretStore {
 pub struct OsKeyringStore;
 
 impl SecretStore for OsKeyringStore {
+    fn exists(&self, reference: &SecretRef) -> Result<bool, SecretError> {
+        match self.get(reference) {
+            Ok(_) => Ok(true),
+            Err(SecretError::NotFound) => Ok(false),
+            Err(error) => Err(error),
+        }
+    }
     fn set(&self, reference: &SecretRef, secret: SecretString) -> Result<(), SecretError> {
         let entry = Entry::new(SecretRef::SERVICE_NAME, reference.as_str())
             .map_err(|_| SecretError::Backend)?;

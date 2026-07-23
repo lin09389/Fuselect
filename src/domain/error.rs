@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigError {
     DuplicateWorkerId(String),
+    DuplicateAdvisor,
     EmptyField(&'static str),
     InvalidAdvisorCount {
         minimum: usize,
@@ -13,6 +14,7 @@ pub enum ConfigError {
     InvalidIdentifier(String),
     InvalidPrice,
     InvalidUrl(String),
+    JudgeIsAdvisor(String),
     MissingCapability {
         worker_id: String,
         capability: &'static str,
@@ -33,6 +35,7 @@ impl Display for ConfigError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::DuplicateWorkerId(id) => write!(formatter, "Worker ID 重复：{id}"),
+            Self::DuplicateAdvisor => formatter.write_str("Fusion 顾问 ID 不能重复"),
             Self::EmptyField(field) => write!(formatter, "字段不能为空：{field}"),
             Self::InvalidAdvisorCount {
                 minimum,
@@ -46,6 +49,7 @@ impl Display for ConfigError {
             Self::InvalidIdentifier(value) => write!(formatter, "Worker ID 非法：{value}"),
             Self::InvalidPrice => formatter.write_str("价格必须是非零的整数微美元"),
             Self::InvalidUrl(value) => write!(formatter, "上游地址必须使用 HTTPS：{value}"),
+            Self::JudgeIsAdvisor(id) => write!(formatter, "Judge 不能同时作为顾问：{id}"),
             Self::MissingCapability {
                 worker_id,
                 capability,

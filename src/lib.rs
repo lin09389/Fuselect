@@ -9,3 +9,4 @@ pub mod secrets;
 pub mod storage;
 
 pub const APPLICATION_NAME: &str = "fuselect";
+pub mod app;
