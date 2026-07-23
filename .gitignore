@@ -1,0 +1,21 @@
+/target/
+/.idea/
+/.vscode/
+*.swp
+*.tmp
+*.log
+fuzz/artifacts/
+fuzz/corpus/
+
+# Local-only Fuselect state, backups, and exports.
+.fuselect/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Locally cloned reference implementations. Keep only Fuselect's research index
+# and notes in the main repository.
+/research/cc-switch-cli/
+/research/chimera-agent/
+/research/codex/
+/research/opencodex/
